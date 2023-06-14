@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import json 
-import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import AllChem, Lipinski, Descriptors
-
+from rdkit.Chem import AllChem
 
 def prop_list_to_dist (prop_list, bin_size, conv_min=None):
     """
@@ -76,11 +73,6 @@ def get_morgan_fingerprint(mol, radius=2, bits=2048):
     fp_arr = np.zeros(bits)
     initialize_mol_props(mol)
     return AllChem.GetMorganFingerprintAsBitVect(mol,radius)
-#     fp_dict =  dict(AllChem.GetHashedMorganFingerprint(mol,radius).GetNonzeroElements())
-#     for k,v in fp_dict.items():
-#         fp_arr[k] = v
-#     return fp_arr
-
 
 def keep_only_lg (smarts_query_obj):
     rwmol = Chem.RWMol(smarts_query_obj)

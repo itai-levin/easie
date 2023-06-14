@@ -1,6 +1,4 @@
 import sys
-from easie.building_blocks.file_pricer import FilePricer
-from easie.graphenum import RxnGraphEnumerator
 import numpy as np
 import json
 import pandas as pd
@@ -10,17 +8,16 @@ from rxnmapper import RXNMapper
 from rdkit import Chem
 import argparse
 
+from easie.building_blocks.file_pricer import FilePricer
+from easie.graphenum import RxnGraphEnumerator
 
 def get_args():
     options = argparse.ArgumentParser()
-    options.add_argument("--askcos-output", dest="askcos_output", type=str, 
-                         default="/home/itail/run_askcos/fda2022_dataset_tb__0.json")
+    options.add_argument("--askcos-output", dest="askcos_output", type=str)
     options.add_argument("--building-blocks", dest="building_blocks", type=str, 
                         default="easie/building_blocks/buyables.json.gz")
     options.add_argument("--out", dest="out_prefix", 
                          description="Prefix for path for analysis summary output", type=str)
-    options.add_argument("--templates", dest="templates", 
-                         default= "/home/itail/askcos-base/askcos-data/db/templates/retro.templates.json.gz")
     return options.parse_args()
 
 
@@ -33,15 +30,8 @@ pricer = FilePricer()
 
 pricer.load(args.building_blocks, precompute_mols=True)
 
-
 with open(args.askcos_output, "r") as f:
     askcos_results = f.readlines()
-
-templates = pd.read_json(args.templates)
-tid_to_template = {
-    tid: template
-    for tid, template in zip(templates["_id"], templates["reaction_smarts"])
-}
 
 for result in askcos_results:
     result = json.loads(result)

@@ -1,12 +1,10 @@
 from typing import List
-
 import networkx as nx
 import re
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdchiral.initialization import rdchiralReactants, rdchiralReaction
 from rdchiral.main import rdchiralRun
-import pdb
 from .template_extractor_local import get_strict_smarts_for_atom
 
 VERBOSE = False

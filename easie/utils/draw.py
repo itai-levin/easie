@@ -3,7 +3,6 @@ import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 from rdkit import Chem
 
-
 def draw_bipartite_route(graph):
     pos = graphviz_layout(graph, prog="dot")
     nx.draw_networkx(

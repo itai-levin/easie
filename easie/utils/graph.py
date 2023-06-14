@@ -1,8 +1,8 @@
 import networkx as nx
-from .template_extractor_local import extract_from_reaction
 from rdkit import Chem
 from typing import List
 from .utils import canonicalize_smiles, reverse_template
+from .template_extractor_local import extract_from_reaction
 
 def graph_from_reaction_smiles(reaction_smiles: List[str], mapper=None) -> nx.DiGraph:
     graph = nx.DiGraph()

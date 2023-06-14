@@ -1,28 +1,23 @@
-import sys
-from easie.building_blocks.file_pricer import FilePricer
-from easie.graphenum import RxnGraphEnumerator
 import numpy as np
 import json
 import pandas as pd
 from tqdm import tqdm
-from easie.utils import askcos_utils
 from rxnmapper import RXNMapper
 from rdkit import Chem
 import argparse
 from rdkit.Chem.FilterCatalog import *
-from rdkit.Chem import Descriptors, Lipinski
-import os
+
+from easie.utils import askcos_utils
+from easie.utils.prop_conv_utils import *
+from easie.building_blocks.file_pricer import FilePricer
+from easie.graphenum import RxnGraphEnumerator
 
 def get_args():
     options = argparse.ArgumentParser()
-    options.add_argument("--askcos-output", dest="askcos_output", type=str, 
-                         default="/home/itail/run_askcos/fda2022_dataset_tb__0.json")
+    options.add_argument("--askcos-output", dest="askcos_output", type=str)
     options.add_argument("--building-blocks", dest="building_blocks", type=str, 
                         default="easie/building_blocks/buyables.json.gz")
     options.add_argument("--out", dest="out_prefix", type=str,)
-                        # description="Prefix for path for analysis summary output")
-    options.add_argument("--templates", dest="templates", type=str,
-                         default= "/home/itail/askcos-base/askcos-data/db/templates/retro.templates.json.gz")
     options.add_argument("--sim-thresh", dest="sim", type=float, default=0)
     options.add_argument("--prop-filters", dest="prop_filters", action="store_true", default=False)
     options.add_argument("--nprocs", dest="nprocs", type=int, default=64)
@@ -39,12 +34,6 @@ pricer.load(args.building_blocks, precompute_mols=True)
 
 with open(args.askcos_output, "r") as f:
     askcos_results = f.readlines()
-
-templates = pd.read_json(args.templates)
-tid_to_template = {
-    tid: template
-    for tid, template in zip(templates["_id"], templates["reaction_smarts"])
-}
 
 for result in askcos_results:
     result = json.loads(result)
@@ -139,22 +128,17 @@ for result in askcos_results:
                     num_analogs = graph.count_combinations()
                     lib = graph.generate_library_filtered(nproc=args.nprocs, filter_func=filter_func)
                 else:
-                    lib = graph.generate_library_filtered(nnproc=args.nprocs)
+                    lib = graph.generate_library(nproc=args.nprocs)
                 with open (out_path, "a") as f:
                     json.dump(lib, f)
                     f.write("\n")
                     
-
-
             except:
               print("Could not run enumeration for path {}".format(path_id))
-
-
 
     with open(args.leaf_out_file, 'w') as f:
             print ("Writing leaf info to:", args.leaf_out_file)
             f.write(json.dumps(graph.leaves))
-
 
     with open(args.out_prefix+"_prop_filters_enumerated_analogs.txt".format(), "w") as f:
         json.dump(lib, f)

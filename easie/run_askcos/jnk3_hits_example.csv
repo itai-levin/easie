@@ -1,0 +1,6 @@
+smiles
+COc1ccc(-c2ccnc(Nc3ccccc3)n2)cc1
+Oc1ccc(Nc2nc(-c3ccc(Cl)cc3)cs2)cc1
+O=C(c1ccc(Cn2c(=O)[nH]c3ccccc3c2=O)cc1)N1CCN(c2ccccc2)CC1
+O=C1NN(c2cccc(Cl)c2)C(=O)/C1=C/c1ccc(O)c([N+](=O)[O-])c1
+N#Cc1c(NC(=O)c2ccccc2OC(F)F)sc2c1CCC2
