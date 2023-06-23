@@ -3,8 +3,9 @@ import json
 import pandas as pd
 from tqdm import tqdm
 from rxnmapper import RXNMapper
-from rdkit import Chem
 import argparse
+from rdkit import Chem
+from rdkit.Chem import Descriptors, Lipinski
 from rdkit.Chem.FilterCatalog import *
 
 from easie.utils import askcos_utils

@@ -3,8 +3,10 @@ import json
 import pandas as pd
 from tqdm import tqdm
 from rxnmapper import RXNMapper
-from rdkit import Chem
 import argparse
+import os
+from rdkit import Chem
+from rdkit.Chem import Descriptors, Lipinski
 from rdkit.Chem.FilterCatalog import *
 
 from easie.utils import askcos_utils
@@ -126,19 +128,14 @@ for result in askcos_results:
                     print ("Enumerating with filters")
                     filter_func = lambda x : prop_filter(x, prop_dict, properties, property_filters, property_ranges)
                     num_analogs = graph.count_combinations()
+                    print ("Estimated number of analogs to enumerate: {}".format(num_analogs))
                     lib = graph.generate_library_filtered(nproc=args.nprocs, filter_func=filter_func)
                 else:
                     lib = graph.generate_library(nproc=args.nprocs)
                 with open (out_path, "a") as f:
                     json.dump(lib, f)
                     f.write("\n")
-                    
+                        
             except:
               print("Could not run enumeration for path {}".format(path_id))
 
-    with open(args.leaf_out_file, 'w') as f:
-            print ("Writing leaf info to:", args.leaf_out_file)
-            f.write(json.dumps(graph.leaves))
-
-    with open(args.out_prefix+"_prop_filters_enumerated_analogs.txt".format(), "w") as f:
-        json.dump(lib, f)
