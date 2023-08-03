@@ -1,14 +1,13 @@
 from run_tree_builder_api2 import *
 
 #csv file with targets in a column named 'smiles'
-TARGETS_FILE = 'jnk3_hits_example.csv'
-#list of ASKCOS instance urls to submit jobs to
-#requires spinning up ASKCOS instances. See: https://github.com/ASKCOS
-HOSTS=['']
+TARGETS_FILE = 'valsartan.csv'
+#list of GCP VM instances to submit jobs to
+HOSTS=['HOST URL']
 #json files with parameters for tree builder
 PARAMS_FILE = 'params.json'
 PRIORITIZERS=[[{'template_set':'reaxys'}]]
-SAVE_PREFIX='jnk-3_hits'
+SAVE_PREFIX='valsartan'
 
 #run jobs in parallel split among the GCP VM instances
 params = json.load(open(PARAMS_FILE,'r'))

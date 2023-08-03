@@ -1,7 +1,0 @@
-matplotlib
-networkx
-numpy
-pandas
-rdkit
-rxnmapper
-tqdm
