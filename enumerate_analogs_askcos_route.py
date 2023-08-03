@@ -22,6 +22,7 @@ def get_args():
     options.add_argument("--out", dest="out_prefix", type=str,)
     options.add_argument("--sim-thresh", dest="sim", type=float, default=0)
     options.add_argument("--prop-filters", dest="prop_filters", action="store_true", default=False)
+    options.add_argument("--brenk-filters", dest="brenk_filters", action="store_true", default=False)
     options.add_argument("--nprocs", dest="nprocs", type=int, default=64)
     return options.parse_args()
 
@@ -48,7 +49,7 @@ for result in askcos_results:
 
     clean_smiles = smiles.replace("/", "").replace("\\", "")
 
-    out_path = "{}{}_enumeration_results.txt".format(args.out_prefix, clean_smiles)
+    out_path = "{}_{}_enumeration_results.txt".format(args.out_prefix, clean_smiles)
     if not os.path.isdir(out_path):
         with open(out_path, 'w') as f:
             f.write("")
@@ -85,11 +86,12 @@ for result in askcos_results:
                 print ("Setting a similarity threshold on building blocks of", args.sim)
                 graph.filter_by_similarity(threshold=args.sim)
 
+                if args.brenk_filters:
                 # filter    
-                params = FilterCatalogParams()
-                params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
-                catalog = FilterCatalog(params)
-                graph.apply_pharma_filters(catalog)
+                    params = FilterCatalogParams()
+                    params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+                    catalog = FilterCatalog(params)
+                    graph.apply_pharma_filters(catalog)
 
                 if args.prop_filters:
                     print ("Applying additional pharmaceutical filters")

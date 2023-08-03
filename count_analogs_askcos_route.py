@@ -7,7 +7,9 @@ from easie.utils import askcos_utils
 from rxnmapper import RXNMapper
 from rdkit import Chem
 import argparse
-
+from rdkit.Chem import Descriptors, Lipinski
+from rdkit.Chem.FilterCatalog import *
+from easie.utils.prop_conv_utils import *
 from easie.building_blocks.file_pricer import FilePricer
 from easie.graphenum import RxnGraphEnumerator
 
@@ -17,7 +19,10 @@ def get_args():
     options.add_argument("--building-blocks", dest="building_blocks", type=str, 
                         default="easie/building_blocks/buyables.json.gz")
     options.add_argument("--out", dest="out_prefix", 
-                         description="Prefix for path for analysis summary output", type=str)
+                         help="Prefix for path for analysis summary output", type=str)
+    options.add_argument("--mw-cutoff", dest='mw_cutoff', type=float, default=None)
+    options.add_argument("--sim-thresh", dest='sim_thresh', type=float, default=None)
+    options.add_argument("--brenk-filters", dest="brenk_filters", action="store_true", default=False)
     return options.parse_args()
 
 
@@ -28,7 +33,9 @@ sep = "\t"
 TP_KEY = "[{'template_set': 'reaxys'}]"
 pricer = FilePricer()
 
+print ("Initializing buyables database")
 pricer.load(args.building_blocks, precompute_mols=True)
+print ("Done initializing buyables database")
 
 with open(args.askcos_output, "r") as f:
     askcos_results = f.readlines()
@@ -43,11 +50,11 @@ for result in askcos_results:
         print("No routes found for {}".format(smiles))
 
     clean_smiles = smiles.replace("/", "").replace("\\", "")
-    out_file = "{}{}_pathways_summaries.csv".format(
+    out_file = "{}_{}_pathways_summaries.csv".format(
         args.out_prefix,
         clean_smiles
     )
-    leaf_out_file = "{}{}_leaves_summaries.json".format(
+    leaf_out_file = "{}_{}_leaves_summaries.json".format(
         args.out_prefix,
         clean_smiles
     )
@@ -57,7 +64,8 @@ for result in askcos_results:
     header += sep.join(reaction_fields_of_interest) + sep
     header += sep.join(chemical_fields_of_interest)
     header += sep + "regioselectivity_concern" + sep + "path_length" + sep + "num_analogs\n"
-    if len(paths) >999:
+    if len(paths): 
+        leaf_mw_dict = {}
         with open(out_file, "w") as f:
             f.write(header)
         with open(leaf_out_file, "w") as f:
@@ -98,17 +106,40 @@ for result in askcos_results:
                 cleaned_mapped_rsmi.append(
                     Chem.MolToSmiles(reactants) + ">>" + Chem.MolToSmiles(products)
                 )
-            try:
-                graph = RxnGraphEnumerator(cleaned_mapped_rsmi)
-                graph.search_building_blocks(pricer)
-                issue = graph.has_regioselectivity_issues()
+#             try:
+            graph = RxnGraphEnumerator(cleaned_mapped_rsmi)
+            graph.search_building_blocks(pricer)
+            issue = graph.has_regioselectivity_issues()
+            if args.brenk_filters:
+                params = FilterCatalogParams()
+                params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+                catalog = FilterCatalog(params)
+                graph.apply_pharma_filters(catalog)
+            if args.sim_thresh is not None:
+                graph.filter_by_similarity(threshold=args.sim_thresh)
+            if args.mw_cutoff is not None:
+                for leaf in graph.leaves:
+                    for option in leaf['options']:
+                        if option not in leaf_mw_dict.keys():
+                            mol = Chem.MolFromSmiles(option)
+                            mw = Descriptors.ExactMolWt(mol)
+                            leaf_mw_dict[option] = mw
+                bb_mw_dists = [[leaf_mw_dict[o] for o in l['options']] for l in graph.leaves]
+                orig_bb_mws = sum([leaf_mw_dict[l['smiles']] for l in graph.leaves])
+                orig_p_mw = Descriptors.ExactMolWt(Chem.MolFromSmiles(graph.root_smiles))
+                mw_correction = orig_p_mw - orig_bb_mws
+                prod_mw_dist = convolve_n_prop_lists(bb_mw_dists, 1)
+                num_analogs = sum([y for y,x in zip(*prod_mw_dist ) if x+mw_correction <= args.mw_cutoff])
+            else:
                 num_analogs = graph.count_combinations()
-                output_line.append(str(issue))
-                output_line.append(str(path_length))
-                output_line.append(str(num_analogs))
-            except:
-              print("Could not run enumeration counting for path {}".format(path_id))
-              output_line.append("0")
+
+
+            output_line.append(str(issue))
+            output_line.append(str(path_length))
+            output_line.append(str(num_analogs))
+#             except:
+#                 print("Could not run enumeration counting for path {}".format(path_id))
+#                 output_line.append("0")
 
             with open(out_file, "a") as f:
                 f.write(sep.join(output_line) + "\n")
@@ -117,4 +148,4 @@ for result in askcos_results:
                 f.write(json.dumps(graph.leaves) + "\n")
 
     else:
-        print("too many paths -- skipping (for now)")
+        print("No paths found")
