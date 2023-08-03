@@ -22,6 +22,7 @@ def get_args():
                         default="easie/building_blocks/buyables.json.gz") 
     options.add_argument("--mw-cutoff", dest='mw_cutoff', type=float, default=None)
     options.add_argument("--sim-thresh", dest='sim_thresh', type=float, default=None)
+    options.add_argument("--brenk-filters", dest="brenk_filters", action="store_true", default=False)
     return options.parse_args()
 
 
@@ -36,17 +37,16 @@ if __name__=='__main__':
     mapped_rsmi = rxn_mapper.get_attention_guided_atom_maps(reaction_smiles)
     mapped_rsmi = [m["mapped_rxn"] for m in mapped_rsmi]
     graph = RxnGraphEnumerator(mapped_rsmi)
-  
-
-
 
     pricer = FilePricer()
     pricer.load(args.building_blocks, precompute_mols=True)
     graph.search_building_blocks(pricer)
-    params = FilterCatalogParams()
-    params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
-    catalog = FilterCatalog(params)
-    graph.apply_pharma_filters(catalog)
+    
+    if args.brenk_filters:
+        params = FilterCatalogParams()
+        params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+        catalog = FilterCatalog(params)
+        graph.apply_pharma_filters(catalog)
    
     # get mw for each leaf
     leaf_mw_dict = {}
@@ -61,17 +61,25 @@ if __name__=='__main__':
 
     if args.mw_cutoff is not None:
         bb_mw_dists = [[leaf_mw_dict[o] for o in l['options']] for l in graph.leaves]
+        
+        orig_bb_mws = sum([leaf_mw_dict[l['smiles']] for l in graph.leaves])
+        orig_p_mw = Descriptors.ExactMolWt(Chem.MolFromSmiles(graph.root_smiles))
+        mw_correction = orig_p_mw - orig_bb_mws
+        
         prod_mw_dist = convolve_n_prop_lists(bb_mw_dists, 1)
-        num_analogs = sum([y for y,x in zip(*prod_mw_dist ) if x <= args.mw_cutoff])
+        num_analogs = sum([y for y,x in zip(*prod_mw_dist ) if x+mw_correction <= args.mw_cutoff])
+    else:
+        num_analogs = graph.count_combinations()    
     
     if args.leaf_out_file is not None:
         with open(args.leaf_out_file, 'w') as f:
             print ("Writing leaf info to:", args.leaf_out_file)
             f.write(json.dumps(graph.leaves))
-
-    else:
-        num_analogs = graph.count_combinations()
     
-    results = {'Similarity threshold:':float(args.sim_thresh),'MW cutoff:':int(args.mw_cutoff), 'Number of analogs:':int(num_analogs)}
+    results = {'Number of analogs:':int(num_analogs)}
+    if args.sim_thresh is not None:
+        results['Similarity threshold:']=float(args.sim_thresh)
+    if args.mw_cutoff is not None:
+        results['MW cutoff:']=int(args.mw_cutoff)
     with open(args.out_prefix+'_enumeration_counting_summary.json', "w") as f:
         json.dump(results, f)

@@ -44,9 +44,7 @@ def graph_from_reaction_smiles(reaction_smiles: List[str], mapper=None) -> nx.Di
     return graph
 
 
-def graph_from_reaction_smarts(
-    reaction_smiles: List[str], reaction_smarts: List[str]
-) -> nx.DiGraph:
+def graph_from_reaction_smarts(reaction_smiles: List[str], reaction_smarts: List[str]) -> nx.DiGraph:
     graph = nx.DiGraph()
     for rsmi, rsmarts in zip(reaction_smiles, reaction_smarts):
         reactants, spectators, products = rsmi.split(">")

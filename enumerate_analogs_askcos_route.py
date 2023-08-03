@@ -48,7 +48,7 @@ for result in askcos_results:
 
     clean_smiles = smiles.replace("/", "").replace("\\", "")
 
-    out_path = "{}{}_enumeration_results".format(args.out_prefix, clean_smiles)
+    out_path = "{}{}_enumeration_results.txt".format(args.out_prefix, clean_smiles)
     if not os.path.isdir(out_path):
         with open(out_path, 'w') as f:
             f.write("")
@@ -125,6 +125,7 @@ for result in askcos_results:
                             if prop_sum < prop_range[0] or prop_sum > prop_range[1]:
                                 return False
                         return True
+                    
                     print ("Enumerating with filters")
                     filter_func = lambda x : prop_filter(x, prop_dict, properties, property_filters, property_ranges)
                     num_analogs = graph.count_combinations()

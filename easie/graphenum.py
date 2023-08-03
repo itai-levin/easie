@@ -1,6 +1,5 @@
 import itertools
 from typing import List
-
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -26,7 +25,6 @@ from .utils.utils import (
     get_strict_symbols_for_mol,
     instantiate_mol
 )
-import pdb
 
 class RxnGraphEnumerator:
     def __init__(
@@ -39,13 +37,18 @@ class RxnGraphEnumerator:
         self.reaction_smiles = reaction_smiles
         self.reaction_smarts = reaction_smarts
         if not self.reaction_smarts:
+            print ('Constructing graph with reaction SMILES...')
             self.graph = graph_from_reaction_smiles(self.reaction_smiles, mapper)
+            print ('Done constructing graph with reaction SMILES')
         else:
+            print ('Constructing graph with reaction SMARTS...')
             self.graph = graph_from_reaction_smarts(
                 self.reaction_smiles, self.reaction_smarts
             )
+            print ('Done constructing graph with reaction SMARTS')
+        
         self.root = self.get_root()
-
+        self.root_smiles = self.graph.nodes[self.root]["smiles"]
         self.leaves = []
         for leaf_node in self.get_leaves():
             smiles = self.graph.nodes[leaf_node]["smiles"]
@@ -58,7 +61,6 @@ class RxnGraphEnumerator:
                     "queried_atoms": [],
                 }
             )
-
         self.reaction_nodes = sorted(
             [
                 node

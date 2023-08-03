@@ -21,6 +21,8 @@ def get_args():
     options.add_argument("--out", dest="out_prefix", type=str,)
     options.add_argument("--sim-thresh", dest="sim", type=float, default=0)
     options.add_argument("--prop-filters", dest="prop_filters", action="store_true", default=False)
+    options.add_argument("--brenk-filters", dest="brenk_filters", action="store_true", default=False)
+    options.add_argument("--use-smarts", dest="use_smarts", action="store_true", default=False)
     options.add_argument("--nprocs", dest="nprocs", type=int, default=64)
     return options.parse_args()
 
@@ -30,27 +32,36 @@ if __name__=='__main__':
     
     #load route
     rxn_mapper = RXNMapper()
-    with open(args.path_file, "r") as f:
-        reaction_smiles = list(json.load(f))
-    mapped_rsmi = rxn_mapper.get_attention_guided_atom_maps(reaction_smiles)
-    mapped_rsmi = [m["mapped_rxn"] for m in mapped_rsmi]
+    if not args.use_smarts:
+        with open(args.path_file, "r") as f:
+            reaction_smiles = list(json.load(f))
+        mapped_rsmi = rxn_mapper.get_attention_guided_atom_maps(reaction_smiles)
+        mapped_rsmi = [m["mapped_rxn"] for m in mapped_rsmi]
+        graph = RxnGraphEnumerator(mapped_rsmi)
+    else:
+        with open(args.path_file, "r") as f:
+            reaction_smiles, reaction_smarts = list(json.load(f))
+        mapped_rsmi = rxn_mapper.get_attention_guided_atom_maps(reaction_smiles)
+        mapped_rsmi = [m["mapped_rxn"] for m in mapped_rsmi]
+        graph = RxnGraphEnumerator(reaction_smiles=reaction_smiles, reaction_smarts=reaction_smarts)
     
     #instantiate graph
     buyables = args.building_blocks
-    graph = RxnGraphEnumerator(mapped_rsmi)
     pricer = FilePricer()
     pricer.load(buyables, precompute_mols=True)
     graph.search_building_blocks(pricer)
     print ("Setting a similarity threshold on building blocks of", args.sim)
     graph.filter_by_similarity(threshold=args.sim)
-
-    params = FilterCatalogParams()
-    params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
-    catalog = FilterCatalog(params)
-    graph.apply_pharma_filters(catalog)
-
-    with open(args.leaf_out_file, 'w') as f:
-            print ("Writing leaf info to:", args.leaf_out_file)
+    
+    if args.brenk_filters:
+        params = FilterCatalogParams()
+        params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+        catalog = FilterCatalog(params)
+        graph.apply_pharma_filters(catalog)
+    
+    leaf_out_file = args.out_prefix + '_leaf_info.json'
+    with open(leaf_out_file, 'w') as f:
+            print ("Writing leaf info to:", leaf_out_file)
             f.write(json.dumps(graph.leaves))
 
     if args.prop_filters:
@@ -95,5 +106,5 @@ if __name__=='__main__':
         lib = graph.generate_library(nproc=args.nprocs)
     
     
-    with open(args.out_prefix+"_prop_filters_enumerated_analogs.txt".format(), "w") as f:
+    with open(args.out_prefix+"_enumerated_analogs.txt".format(), "w") as f:
         json.dump(lib, f)
