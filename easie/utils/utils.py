@@ -78,6 +78,8 @@ def run_reaction_node(graph, node, constrain_smiles=False, return_all_results=Fa
     reactants = rdchiralReactants(reactant_smiles)
     result = rdchiralRun(rxn, reactants)
     result = list(sorted(result, key=lambda x: len(x), reverse=True))
+    ### REMOVE PRODUCTS THAT ARE SPLIT (e.g. intramolecular reaction)
+    result = [r for r in result if '.' not in r]
     if len(result) == 0:
         if VERBOSE:
             print(
