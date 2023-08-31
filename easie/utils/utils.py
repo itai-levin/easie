@@ -95,7 +95,8 @@ def run_reaction_node(graph, node, constrain_smiles=False, return_all_results=Fa
         if return_all_results:
             return result
         if len(result) > 1:
-            print("WARNING: multiple products found, using first product found")
+            if VERBOSE:
+                print("WARNING: multiple products found, using first product found")
         return result[0]
     else:
         if VERBOSE:
