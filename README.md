@@ -1,6 +1,8 @@
-## EASIE - Exploration of chemical Analog Space, Implicitly and Explicitly
+# EASIE - Exploration of chemical Analog Space, Implicitly and Explicitly
 
-### Usage:
+This repository contains the code described in [Computer-aided evaluation and exploration of chemical spaces constrained by reaction pathways](https://aiche.onlinelibrary.wiley.com/doi/full/10.1002/aic.18234)
+
+## Usage:
 #### 1. Set up Conda environment 
 a. Initialize the Conda environment: `conda env create --file environment.yml`
 b. Activate the Conda environment `conda activate easie`
@@ -21,5 +23,8 @@ To generate routes from ASKCOS in the appropariate format, use the script `easie
 
 For example calls and usage examples, see `exmample_from_ASKCOS_route.ipynb`.
 
+## How to cite:
+Levin, I, Fortunato, ME, Tan, KL, Coley, CW. Computer-aided evaluation and exploration of chemical spaces constrained by reaction pathways. AIChE J. 2023;e18234. [doi:10.1002/aic.18234](https://doi.org/10.1002/aic.18234)
 
-Authors: Itai Levin and Michael Fortunato
+
+Code contributors: Itai Levin and Michael Fortunato
